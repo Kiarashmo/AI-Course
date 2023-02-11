@@ -1,4 +1,4 @@
-# AI-Course
+# AI Course Projects
 
 Welcome to my AI Projects repository! This repository contains all the projects I will be working on as part of my AI course at university. Each project is designed to challenge my skills and expand my knowledge in the field of Artificial Intelligence.
 
