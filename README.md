@@ -6,11 +6,13 @@ Welcome to my AI Projects repository! This repository contains all the projects 
 
 The projects in this repository are as follows:
 
-1. Image Recognition
-2. Natural Language Processing
-3. Reinforcement Learning
-4. Generative Adversarial Networks
-5. Decision Trees and Random Forests
+1. Investigation of intelligent vehicles and the application of natural language processing, machine vision, and robotics in intelligent vehicles.
+2. Summarize the research paper "Lu, Ximing, Sean Welleck, Peter West, Liwei Jiang, Jungo Kasai, Daniel Khashabi, Ronan Le Bras et al. "Neurologic a* esque decoding: Constrained text generation with lookahead heuristics." arXiv preprint arXiv:2112.08726 (2021)".
+3. Implementing Monopoly game.
+4. Implementation of the Sudoku game using advanced constraint-based and heuristic methods.
+5. Analysing Diabetes 130-US hospitals for years 1999-2008 dataset with clustering and classification methods.
+6. Solve the n-queens problem using the incremental evolutionary algorithm with n values of 8 and 16.
+7. Implementing the research paper "Singh, P., Chaudhury, S., & Panigrahi, B. K. (2021). Hybrid MPSO-CNN: Multi-level particle swarm optimized hyperparameters of convolutional neural network. Swarm and Evolutionary Computation, 63, 100863".
 
 ## Contributions
 
