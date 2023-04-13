@@ -20,5 +20,5 @@ If you find any bugs or have suggestions for improvements, feel free to create a
 
 ## Contact
 
-If you have any questions or want to connect, feel free to email me at [your email address]. I am always open to new opportunities and collaborations in the field of AI.
+If you have any questions or want to connect, feel free to email me at mokhtarikiarash@gmail.com. I am always open to new opportunities and collaborations in the field of AI.
 
