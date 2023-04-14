@@ -1,7 +1,8 @@
 import random
 import copy
-import math
+import time
 
+MAX_ROUNDS = 30
 
 '''
 Initializing game board with builtin dictionary data structure
@@ -12,6 +13,7 @@ Initializing game board with builtin dictionary data structure
     4. One action per turn.
     5. No color(it means streets dont have any color and if player landed on a street can buy it and build house and hotels for it).
     6. No sell option(yet).
+    7. if player land on 'Go Jail' goes to 'jail' and must give 100$ and start the game from there
 '''
 class stats:
     def __init__(self, id, location, balance, jail, ownedP, ownedRR, ownedUT):
@@ -24,9 +26,9 @@ class stats:
         self.ownedUT = ownedUT  # store the utilities that the player has bought (list of utility names or index)
 
 # set up players with stats class
-player = {}
+players = {}
 for count in range(1, 3):
-     player.update({count: stats(count, 0, 1500, False, [],[], [])})
+     players.update({count: stats(count, 0, 1500, False, [],[], [])})
 
 number_of_players = 2 #player
 current_player = 1 #current
@@ -192,49 +194,49 @@ def evaluate_utility(player):
      return net_worth
 
 
-def transition(player, properties, current_player, action):
+def transition(players: dict, properties: dict, current_player: int, action):
      new_properties = copy.deepcopy(properties)
-     new_player = copy.deepcopy(player)
+     new_players = copy.deepcopy(players)
 
      # Execute action
      if action == all_actions[0]: # Do nothing
           pass
 
      elif action == all_actions[1]: # Buy property
-          new_player[current_player].balance -= new_properties[new_player[current_player].location]["price"]
-          new_player[current_player].ownedP.append(new_player[current_player].location)
-          new_properties[new_player[current_player].location]["owner"] = new_player[current_player].id
+          new_players[current_player].balance -= new_properties[new_players[current_player].location]["price"]
+          new_players[current_player].ownedP.append(new_players[current_player].location)
+          new_properties[new_players[current_player].location]["owner"] = new_players[current_player].id
 
      elif action == all_actions[2]: # Pay rent
-          charge_rent(new_player[current_player])
+          charge_rent(new_players[current_player])
           
      elif action == all_actions[3]: # Pay tax
-          new_player[current_player].balance -= new_properties[new_player[current_player].location]["tax_price"]
+          new_players[current_player].balance -= new_properties[new_players[current_player].location]["tax_price"]
           
      elif action == all_actions[4]: # Build house
-          build_house(new_player[current_player], new_player[current_player].location)
+          build_house(new_players[current_player], new_players[current_player].location)
           
      elif action == all_actions[5]: # Build hotel
-          build_hotel(new_player[current_player], new_player[current_player].location)
+          build_hotel(new_players[current_player], new_players[current_player].location)
           
      elif action == all_actions[6]: # Jail free
-          new_player[current_player].location = 8
-          new_player[current_player].balance -= 100
+          new_players[current_player].location = 8
+          new_players[current_player].balance -= 100
      
-     return new_player, new_properties
+     return new_players, new_properties
 
-def expectiminimax(player, properties, depth, is_max: bool, chance: bool=False):
-     if is_terminal(player) or depth == 0:
-          return evaluate_utility(player)
+def expectiminimax(players: dict, properties: dict, depth: int, is_max: bool, chance: bool=False):
+     if is_terminal(players) or depth == 0:
+          return evaluate_utility(players), None
      
      elif is_max:
           max_value = float("-inf")
-          actions = get_valid_actions(player)
+          actions = get_valid_actions(players[current_player])
 
           for action in actions:
-               new_player, new_properties = transition(player, properties, current_player, action)
+               new_players, new_properties = transition(players, properties, current_player, action)
                switch_player()
-               value, _ = expectiminimax(new_player[current_player], new_properties, depth-1, False, True)
+               value, _ = expectiminimax(new_players[current_player], new_properties, depth-1, False, True)
                if value > max_value:
                     max_value = value
                     best_action = action
@@ -243,12 +245,12 @@ def expectiminimax(player, properties, depth, is_max: bool, chance: bool=False):
      
      elif is_max == False:
           min_value = float("inf")
-          actions = get_valid_actions(player)
+          actions = get_valid_actions(players[current_player])
           
           for action in actions:
-               new_player, new_properties = transition(player, properties, current_player, action)
+               new_players, new_properties = transition(players, properties, current_player, action)
                switch_player()
-               value, _ = expectiminimax(new_player[current_player], new_properties, depth-1, True, True)
+               value, _ = expectiminimax(new_players[current_player], new_properties, depth-1, True, True)
                
                if value < min_value:
                     min_value = value
@@ -259,14 +261,73 @@ def expectiminimax(player, properties, depth, is_max: bool, chance: bool=False):
      else:
           total_value = 0
           for dice in range(2,13):
-               new_player, new_properties = transition(player, properties, current_player, action)
+               new_players, new_properties = transition(players, properties, current_player, action)
                switch_player()
-               value, _ = expectiminimax(new_player[current_player], new_properties, depth-1, False, False)
+               value, _ = expectiminimax(new_players[current_player], new_properties, depth-1, False, False)
                total_value += value*probability[dice]
 
           return total_value, None
 
+round_num = 0
+start_time = time.time()
 
+while round_num <= MAX_ROUNDS:
+
+    # Print current game state
+    print(f"Round {round_num}:")
+    print(f"Player {current_player}'s turn")
+    print("Player's status:")
+    print(f"Player Balance: {players[current_player].balance} , Properties: {players[current_player].ownedP} , RailRoad: {players[current_player].ownedRR} , Utility: {players[current_player].ownedUT}")
+
+    # Roll the dice
+    rolls = roll_dice()
+    roll_res = rolls[0] + rolls[1]
+    print(f"Player {current_player} rolled {rolls[0]} + {rolls[1]} = {roll_res}")
+
+    # Update player location and handle passing Go
+    players[current_player].location += roll_res
+    if players[current_player].location >= 40:
+        players[current_player].location -= 40
+        players[current_player].balance += 200
+        print(f"Player {current_player} passed Go and collected $200")
+
+    # Get valid actions for the current player
+    actions = get_valid_actions(players[current_player])
+
+    # If the player has no valid actions, end their turn
+    if len(actions) == 0:
+        print(f"Player {current_player} has no valid actions and must end their turn")
+        switch_player()
+        continue
+
+    # Use expectiminimax to choose the best action for the current player
+    _, best_action = expectiminimax(players, properties, 3, True, True)
+    print(f"Player {current_player} chose action: {best_action}")
+
+    # Update game state based on the chosen action
+    players, properties = transition(players, properties, current_player, best_action)
+
+    # Check if the game has ended
+    if is_terminal(players[current_player]):
+        print("Game over!")
+        break
+
+    # Switch to the next player
+    switch_player()
+    round_num += 1
+
+end_time = time.time()
+
+# Print the final game state
+print("Final game state:")
+
+for i in range(0,2):
+     print(f"Player Balance: {players[i].balance} , Properties: {players[i].ownedP} , RailRoad: {players[i].ownedRR} , Utility: {players[i].ownedUT}")
+
+print(f"Player 1's net worth: {evaluate_utility(players[1])}")
+print(f"Player 2's net worth: {evaluate_utility(players[2])}")
+
+print(f"Time spend to finish the game: {str(end_time - start_time)}")
 
 
 
