@@ -1,3 +1,5 @@
+import random
+
 '''
 Initializing game board with builtin dictionary data structure
 * Game's rule for this version of Monopoly:
@@ -7,7 +9,120 @@ Initializing game board with builtin dictionary data structure
     4. One action per turn.
     5. No color(it means streets dont have any color and if player landed on a street can buy it and build house and hotels for it).
 '''
-import random
+class stats:
+    def __init__(self, id, location, balance, jail, ownedP, ownedRR, ownedUT):
+        self.id = id # store the id of each player (int: 1 , 2)
+        self.location = location  # store the location of the player (string or index of dictionary)
+        self.balance = balance  # store the amount of money the player has (int data)
+        self.jail = jail  # store whether the player is in jail or not (bool data)
+        self.ownedP = ownedP  # store the properties that the player has bought (list of property names or index)
+        self.ownedRR = ownedRR  # store the railroads that the player has bought (list of railroad names or index)
+        self.ownedUT = ownedUT  # store the utilities that the player has bought (list of utility names or index)
+
+# set up players with stats class
+player = {}
+for count in range(0, 3):
+    if count == 0: # this is for ignoring 0 index and just count 1 and 2 as players.
+        player.update({count: stats(0, 0, 0, False, [], [], [])})
+    else:
+        player.update({count: stats(count, 0, 1500, False, [],[], [])})
+
+number_of_players = 2 #player
+current_player = 0 #current
+flag = False
+player_left = number_of_players #pleft
+
+# defining some important functions:
+# roll dice return a tuple of two numbers that they generated randomly.
+def roll_dice():
+    dice1 = random.randint(1, 6)
+    dice2 = random.randint(1, 6)
+    return (dice1, dice2)
+
+# updates players location.
+def move_player(player, rolls): 
+    current_location = player.location
+    
+    roll = rolls[0] + rolls[1]
+    
+    # calculate the new location by adding the roll to the current location
+    new_location = (current_location + roll) % 34
+    
+    # check if the player passed Go
+    if new_location < current_location:
+        print(f"{player} passed GO and collected 200$.")
+        player.balance += 200
+    
+    # update the player's location
+    player.location = new_location
+
+def is_terminal(player):
+     if player.balance <= 0:
+         return True
+     return False
+
+def purchase(player):
+     prop_type = properties[player.location]["type"]
+     owner_id  = properties[player.location]["owner"]
+
+     if  prop_type in ["property", "railroad", "utility"] and owner_id == "none":
+          properties[player.location]["owner"] =  player.id
+          player.balance -= properties[player.location]["price"]
+          
+          if prop_type == "property":
+               player.ownedP.append(player.location)
+          
+          elif prop_type == "railroad":
+               player.ownedRR.append(player.location) 
+
+          elif prop_type == "utility":
+               player.ownedUT.append(player.location) 
+     
+     elif owner_id != "none":
+          raise ValueError("This propertie is owned by other player(ownership error)")
+    
+     else:
+          raise ValueError("You can't buy this place(type error)")
+
+def charge_rent(player):
+     rent = properties[player.location]["rent"]
+     owner_id = properties[player.location]["owner"]
+
+     if owner_id != "none" and owner_id != player.id and rent > 0:
+          player.balance -= rent
+          player[owner_id].balance += rent
+          print(f"{player.id} paid {rent}$ to {owner_id}") 
+     
+     else:
+          #Either this property is not owned by any player or the player is the owner of this property.
+          raise ValueError(f"Error: Unable to charge rent from {player.id}.") 
+
+def build_house(player):
+    
+    
+    # Check if the property belongs to the player and is a valid property to build on
+    if property in player.ownedP and properties[property]["type"] == "property" and properties[property]["houses"] < 4:
+        
+        # Check if the player has enough money to build a house
+        if player.balance >= properties[property]["house_cost"]:
+            # Subtract the cost of the house from the player's balance
+            player.balance -= properties[property]["house_cost"]
+            # Increase the number of houses on the property by 1
+            properties[property]["houses"] += 1
+            print(f"{player.name} built a house on {property}")
+        else:
+            raise ValueError(f"{player.name} doesn't have enough money to build a house on {property}")
+    else:
+        raise ValueError(f"{property} is not a valid property to build a house on or it doesn't belong to {player.name}")
+
+
+
+
+
+
+
+
+
 # properties
 properties = {0: {"name": "Go",
                   "price": 0,
@@ -338,7 +453,7 @@ properties = {0: {"name": "Go",
              }
 
 
-titleDeeds = {"Mediterranean Avenue": {0: 2, 1: 10, 2: 30, 3: 90, 4: 160, 5: 250},
+title_deeds = {"Mediterranean Avenue": {0: 2, 1: 10, 2: 30, 3: 90, 4: 160, 5: 250},
               "Baltic Avenue": {0: 4, 1: 20, 2: 60, 3: 180, 4: 320, 5: 450},
               "Oriental Avenue": {0: 6, 1: 30, 2: 90, 3: 270, 4: 400, 5: 550},
               "Vermont Avenue": {0: 6, 1: 30, 2: 90, 3: 270, 4: 400, 5: 550},
@@ -370,84 +485,16 @@ all_actions = {
     5: "BUILD_HOTEL"          
 }
 
-class stats:
-    def __init__(self, name, location, balance, jail, ownedP, ownedRR, ownedUT):
-        self.name = name # store the id of each player (int: 1 , 2)
-        self.location = location  # store the location of the player (string or index of dictionary)
-        self.balance = balance  # store the amount of money the player has (int data)
-        self.jail = jail  # store whether the player is in jail or not (bool data)
-        self.ownedP = ownedP  # store the properties that the player has bought (list of property names or index)
-        self.ownedRR = ownedRR  # store the railroads that the player has bought (list of railroad names or index)
-        self.ownedUT = ownedUT  # store the utilities that the player has bought (list of utility names or index)
-
-# set up players with stats class
-player = {}
-for count in range(0, 3):
-    if count == 0: # this is for ignoring 0 index and just count 1 and 2 as players.
-        player.update({count: stats(0, 0, 0, False, [], [], [])})
-    else:
-        player.update({count: stats(count, 0, 1500, False, [],[], [])})
-
-
-
-number_of_players = 2 #player
-current_player = 0 #current
-flag = False
-player_left = number_of_players #pleft
-
-def roll_dice():
-    dice1 = random.randint(1, 6)
-    dice2 = random.randint(1, 6)
-    return (dice1, dice2)
-
-# returns the dictionary of the propertie that the player landed on.
-def move_player(player, rolls): 
-
-    current_location = player.location
-    
-    roll = rolls[0] + rolls[1]
-    
-    # calculate the new location by adding the roll to the current location
-    new_location = (current_location + roll) % 34
-    
-    # check if the player passed Go
-    if new_location < current_location:
-        print(f"{player} passed GO and collected 200$.")
-        player.balance += 200
-    
-    # update the player's location
-    player.location = new_location
-
-def is_terminal(player):
-     if player.balance <= 0:
-         return True
-     return False
-
-def purchase_property(player):
-     if properties[player.location]["type"] in ["property", "railroad", "utility"] and properties[player.location]["owner"] == "none":
-          
-          properties[player.location]["owner"] =  player.name
-          player.balance -= properties[player.location]["price"]
-          
-          if properties[player.location]["type"] == "property":
-              player.ownedP.append(player.location)
-          
-          elif properties[player.location]["type"] == "railroad":
-               player.ownedRR.append(player.location) 
-
-          elif properties[player.location]["type"] == "utility":
-              player.ownedUT.append(player.location) 
-     
-     elif properties[player.location]["owner"] != "none":
-          raise ValueError("This propertie is owned by other player(ownership error)")
-    
-     else:
-          raise ValueError("You can't buy this place(type error)")
-
-def charge_rent(player):
-     player.balance -= properties[player.location]["rent"]
-     player[properties[player.location]["owner"]].balance += properties[player.location]["rent"]
-    
-
-
-
+probability = {
+    2: 1 / 36,
+    3: 2 / 36,
+    4: 3 / 36,
+    5: 4 / 36,
+    6: 5 / 36,
+    7: 6 / 36,
+    8: 5 / 36,
+    9: 4 / 36,
+    10: 3 / 36,
+    11: 2 / 36,
+    12: 1 / 36,
+}
