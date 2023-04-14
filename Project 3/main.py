@@ -1,5 +1,6 @@
 import random
 import copy
+import math
 
 
 '''
@@ -24,11 +25,8 @@ class stats:
 
 # set up players with stats class
 player = {}
-for count in range(0, 3):
-    if count == 0: # this is for ignoring 0 index and just count 1 and 2 as players.
-        player.update({count: stats(0, 0, 0, False, [], [], [])})
-    else:
-        player.update({count: stats(count, 0, 1500, False, [],[], [])})
+for count in range(1, 3):
+     player.update({count: stats(count, 0, 1500, False, [],[], [])})
 
 number_of_players = 2 #player
 current_player = 1 #current
@@ -50,11 +48,6 @@ def move_player(player, rolls):
     
     # calculate the new location by adding the roll to the current location
     new_location = (current_location + roll) % 34
-    
-    # check if the player passed Go
-    if new_location < current_location:
-        print(f"{player} passed GO and collected 200$.")
-        player.balance += 200
     
     # update the player's location
     player.location = new_location
@@ -133,11 +126,13 @@ def build_hotel(player, property):
      else:
           raise ValueError("Cannot build hotel on this property")
      
-def switch_player(current_player) -> int:
-     if current_player == 1:
-          return 2
+def switch_player():
+     global current_player
+
+     if player[current_player].id == 1:
+          current_player = 2
      else:
-          return 1
+          current_player = 1
 
 def get_valid_actions(player):
      actions = []
@@ -197,36 +192,81 @@ def evaluate_utility(player):
      return net_worth
 
 
-def transition(player, action):
+def transition(player, properties, current_player, action):
      new_properties = copy.deepcopy(properties)
      new_player = copy.deepcopy(player)
 
      # Execute action
-     if action == all_actions[1]: # Buy property
-          new_player.balance -= new_properties[new_player.location]["price"]
-          new_player.ownedP.append(new_player.location)
-          new_properties[new_player.location]["owner"] = new_player.id
-
-     elif action == all_actions[0]: # Don't buy property
+     if action == all_actions[0]: # Do nothing
           pass
 
+     elif action == all_actions[1]: # Buy property
+          new_player[current_player].balance -= new_properties[new_player[current_player].location]["price"]
+          new_player[current_player].ownedP.append(new_player[current_player].location)
+          new_properties[new_player[current_player].location]["owner"] = new_player[current_player].id
+
      elif action == all_actions[2]: # Pay rent
-          charge_rent(new_player)
+          charge_rent(new_player[current_player])
           
      elif action == all_actions[3]: # Pay tax
-          new_player.balance -= new_properties[new_player.location]["tax_price"]
+          new_player[current_player].balance -= new_properties[new_player[current_player].location]["tax_price"]
           
      elif action == all_actions[4]: # Build house
-          build_house(new_player, new_player.location)
+          build_house(new_player[current_player], new_player[current_player].location)
           
      elif action == all_actions[5]: # Build hotel
-          build_hotel(new_player, new_player.location)
+          build_hotel(new_player[current_player], new_player[current_player].location)
           
      elif action == all_actions[6]: # Jail free
-          new_player.location = 8
-          new_player.balance -= 100
+          new_player[current_player].location = 8
+          new_player[current_player].balance -= 100
      
      return new_player, new_properties
+
+def expectiminimax(player, properties, depth, is_max: bool, chance: bool=False):
+     if is_terminal(player) or depth == 0:
+          return evaluate_utility(player)
+     
+     elif is_max:
+          max_value = float("-inf")
+          actions = get_valid_actions(player)
+
+          for action in actions:
+               new_player, new_properties = transition(player, properties, current_player, action)
+               switch_player()
+               value, _ = expectiminimax(new_player[current_player], new_properties, depth-1, False, True)
+               if value > max_value:
+                    max_value = value
+                    best_action = action
+
+          return max_value, best_action
+     
+     elif is_max == False:
+          min_value = float("inf")
+          actions = get_valid_actions(player)
+          
+          for action in actions:
+               new_player, new_properties = transition(player, properties, current_player, action)
+               switch_player()
+               value, _ = expectiminimax(new_player[current_player], new_properties, depth-1, True, True)
+               
+               if value < min_value:
+                    min_value = value
+                    best_action = action
+
+          return min_value, best_action
+     
+     else:
+          total_value = 0
+          for dice in range(2,13):
+               new_player, new_properties = transition(player, properties, current_player, action)
+               switch_player()
+               value, _ = expectiminimax(new_player[current_player], new_properties, depth-1, False, False)
+               total_value += value*probability[dice]
+
+          return total_value, None
+
+
 
 
 
