@@ -132,39 +132,43 @@ def switch_player(current_player) -> int:
           return 1
 
 def get_valid_actions(player):
-    actions = []
+     actions = []
 
-    # Add the "NOTHING" action
-    actions.append(all_actions[0])
+     if properties[player.location]["name"] in ["Go", "Just Visiting/Jail", "Free Parking"]:
+          actions.append(all_actions[0])
+          
+     elif properties[player.location]["name"] == "Go To Jail":
+          actions.append(all_actions[6])
 
-    # Check if player is on a property
-    if properties[player.location]["type"] in ["property", "railroad", "utility"]:
-        # Check if the property is unowned
-        if properties[player.location]["owner"] == "none":
-            # Add the "BUY_PROP" action
-            actions.append(all_actions[1])
-        else:
-            # Add the "PAY_RENT" action
-            actions.append(all_actions[2])
+     # Check if player is on a property
+     elif properties[player.location]["type"] in ["property", "railroad", "utility"]:
+          # Check if the property is unowned
+          if properties[player.location]["owner"] == "none":
+               # Add the "BUY_PROP" action
+               actions.append(all_actions[0])
+               actions.append(all_actions[1])
+          elif properties[player.location]["owner"] != player.id :
+               # Add the "PAY_RENT" action
+               actions.append(all_actions[2])
+          elif properties[player.location]["type"] == "property":
+               # Add the "BUILD_HOUSE" or "BUILD_HOTEL" action
+               if player.balance >= properties[player.location]["hprice"] and properties[player.location]["houses"] < 4:
+                    # Add the "BUILD_HOUSE" action
+                    actions.append(all_actions[0])
+                    actions.append(all_actions[4])
+          
+               # Check if player has enough money to build a hotel
+               elif player.balance >= properties[player.location]["hprice"]:
+                    # Add the "BUILD_HOTEL" action
+                    actions.append(all_actions[0])
+                    actions.append( all_actions[5])
+     
+     # Check if player is on tax
+     elif properties[player.location]["type"] == "tax":
+          # Add the "PAY_TAX" action
+          actions.append(all_actions[3])
 
-    # Check if player is on tax
-    elif properties[player.location]["type"] == "tax":
-        # Add the "PAY_TAX" action
-        actions.append(all_actions[3])
-
-    # Check if player owns any properties
-    if player.ownedP:
-        # Check if player has enough money to build a house
-        if player.balance >= properties[player.ownedP[0]]["hprice"]:
-            # Add the "BUILD_HOUSE" action
-            actions.append(all_actions[4])
-        
-        # Check if player has enough money to build a hotel
-        if player.balance >= properties[player.ownedP[0]]["hprice"]:
-            # Add the "BUILD_HOTEL" action
-            actions.append(all_actions[5])
-
-    return actions
+     return actions
 
 
 
@@ -535,7 +539,8 @@ all_actions = {
     2: "PAY_RENT",
     3: "PAY_TAX",
     4: "BUILD_HOUSE",
-    5: "BUILD_HOTEL"          
+    5: "BUILD_HOTEL",
+    6: "JAIL_FREE"        
 }
 
 probability = {
