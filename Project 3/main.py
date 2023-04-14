@@ -1,4 +1,6 @@
 import random
+import copy
+
 
 '''
 Initializing game board with builtin dictionary data structure
@@ -95,8 +97,8 @@ def charge_rent(player):
                player[owner_id].balance = player[owner_id].balance + (rent + 10*properties[player.location]["houses"])
                print(f"{player.id} paid {rent + 10*properties[player.location]['houses']}$ to {owner_id}") 
           else:
-               player.balance = player.balance - (rent + 10*properties[player.location]["hotel"])
-               player[owner_id].balance = player[owner_id].balance + (rent + 10*properties[player.location]["hotel"])
+               player.balance = player.balance - (rent + 10*(properties[player.location]["houses"] + 1))
+               player[owner_id].balance = player[owner_id].balance + (rent + 10*(properties[player.location]["houses"] + 1))
                print(f"{player.id} paid {rent + 10*properties[player.location]['hotel']}$ to {owner_id}") 
      
      else:
@@ -176,9 +178,55 @@ def get_valid_actions(player):
 
      return actions
 
+def evaluate_utility(player):
+     net_worth = 0
+     for prop_loc in player.ownedP:
+          if properties[prop_loc]["hotel"] == 0:
+               net_worth += properties[prop_loc]["rent"]+ 10*properties[prop_loc]["houses"]
+          else:
+               net_worth += properties[prop_loc]["rent"]+ 10*(properties[prop_loc]["houses"] + 1)
+     
+     for rr_loc in player.ownedRR:
+          net_worth += properties[rr_loc]["rent"]
+     
+     for ut_loc in player.ownedUT:
+          net_worth += properties[ut_loc]["rent"]
+          
+     net_worth += player.balance
+
+     return net_worth
 
 
+def transition(player, action):
+     new_properties = copy.deepcopy(properties)
+     new_player = copy.deepcopy(player)
 
+     # Execute action
+     if action == all_actions[1]: # Buy property
+          new_player.balance -= new_properties[new_player.location]["price"]
+          new_player.ownedP.append(new_player.location)
+          new_properties[new_player.location]["owner"] = new_player.id
+
+     elif action == all_actions[0]: # Don't buy property
+          pass
+
+     elif action == all_actions[2]: # Pay rent
+          charge_rent(new_player)
+          
+     elif action == all_actions[3]: # Pay tax
+          new_player.balance -= new_properties[new_player.location]["tax_price"]
+          
+     elif action == all_actions[4]: # Build house
+          build_house(new_player, new_player.location)
+          
+     elif action == all_actions[5]: # Build hotel
+          build_hotel(new_player, new_player.location)
+          
+     elif action == all_actions[6]: # Jail free
+          new_player.location = 8
+          new_player.balance -= 100
+     
+     return new_player, new_properties
 
 
 
@@ -221,7 +269,8 @@ properties = {0: {"name": "Go",
                   "price": 0, 
                   "rent": 0, 
                   "color": "none", 
-                  "type": "tax", 
+                  "type": "tax",
+                  "tax_price": 200,
                   "owner": "none", 
                   "houses": 0, 
                   "hotels": 0},
@@ -501,6 +550,7 @@ properties = {0: {"name": "Go",
                    "rent": 0, 
                    "color": "none", 
                    "type": "tax", 
+                   "tax_price": 100,
                    "owner": "none", 
                    "houses": 0, 
                    "hotels": 0},
