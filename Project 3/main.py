@@ -97,23 +97,35 @@ def charge_rent(player):
           #Either this property is not owned by any player or the player is the owner of this property.
           raise ValueError(f"Error: Unable to charge rent from {player.id}.") 
 
-def build_house(player):
-    
-    
-    # Check if the property belongs to the player and is a valid property to build on
-    if property in player.ownedP and properties[property]["type"] == "property" and properties[property]["houses"] < 4:
-        
-        # Check if the player has enough money to build a house
-        if player.balance >= properties[property]["house_cost"]:
-            # Subtract the cost of the house from the player's balance
-            player.balance -= properties[property]["house_cost"]
-            # Increase the number of houses on the property by 1
-            properties[property]["houses"] += 1
-            print(f"{player.name} built a house on {property}")
-        else:
-            raise ValueError(f"{player.name} doesn't have enough money to build a house on {property}")
-    else:
-        raise ValueError(f"{property} is not a valid property to build a house on or it doesn't belong to {player.name}")
+def build_house(player, property):
+     # Check if the property belongs to the player and is a valid property to build on
+     if property in player.ownedP and properties[property]["houses"] < 4:
+          
+          # Check if the player has enough money to build a house
+          if player.balance >= properties[property]["house_cost"]:
+               # Subtract the cost of the house from the player's balance
+               player.balance -= properties[property]["house_cost"]
+               # Increase the number of houses on the property by 1
+               properties[property]["houses"] += 1
+               print(f"{player.name} built a house on {property}")
+          else:
+               raise ValueError(f"{player.name} doesn't have enough money to build a house on {property}")
+     else:
+          raise ValueError(f"{property} is not a valid property to build a house on or it doesn't belong to {player.name}")
+     
+def build_hotel(player, property):
+     if property in player.ownedP and properties[property]["type"] == "property" and properties[property]["houses"] == 4:
+          if player.balance >= properties[property]["hprice"]:
+               player.balance -= properties[property]["hprice"]
+               properties[property]["houses"] = 0
+               properties[property]["houses"] = True
+               print(f"{player.id} built a hotel on {properties[property]['name']} for {properties[property]['hprice']}$")
+          else:
+               raise ValueError("Insufficient funds to build hotel")
+     else:
+          raise ValueError("Cannot build hotel on this property")
+
+
 
 
 
