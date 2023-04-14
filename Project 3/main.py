@@ -28,7 +28,7 @@ for count in range(0, 3):
         player.update({count: stats(count, 0, 1500, False, [],[], [])})
 
 number_of_players = 2 #player
-current_player = 0 #current
+current_player = 1 #current
 flag = False
 player_left = number_of_players #pleft
 
@@ -102,9 +102,9 @@ def build_house(player, property):
      if property in player.ownedP and properties[property]["houses"] < 4:
           
           # Check if the player has enough money to build a house
-          if player.balance >= properties[property]["house_cost"]:
+          if player.balance >= properties[property]["hprice"]:
                # Subtract the cost of the house from the player's balance
-               player.balance -= properties[property]["house_cost"]
+               player.balance -= properties[property]["hprice"]
                # Increase the number of houses on the property by 1
                properties[property]["houses"] += 1
                print(f"{player.name} built a house on {property}")
@@ -124,6 +124,47 @@ def build_hotel(player, property):
                raise ValueError("Insufficient funds to build hotel")
      else:
           raise ValueError("Cannot build hotel on this property")
+     
+def switch_player(current_player) -> int:
+     if current_player == 1:
+          return 2
+     else:
+          return 1
+
+def get_valid_actions(player):
+    actions = []
+
+    # Add the "NOTHING" action
+    actions.append(all_actions[0])
+
+    # Check if player is on a property
+    if properties[player.location]["type"] in ["property", "railroad", "utility"]:
+        # Check if the property is unowned
+        if properties[player.location]["owner"] == "none":
+            # Add the "BUY_PROP" action
+            actions.append(all_actions[1])
+        else:
+            # Add the "PAY_RENT" action
+            actions.append(all_actions[2])
+
+    # Check if player is on tax
+    elif properties[player.location]["type"] == "tax":
+        # Add the "PAY_TAX" action
+        actions.append(all_actions[3])
+
+    # Check if player owns any properties
+    if player.ownedP:
+        # Check if player has enough money to build a house
+        if player.balance >= properties[player.ownedP[0]]["hprice"]:
+            # Add the "BUILD_HOUSE" action
+            actions.append(all_actions[4])
+        
+        # Check if player has enough money to build a hotel
+        if player.balance >= properties[player.ownedP[0]]["hprice"]:
+            # Add the "BUILD_HOTEL" action
+            actions.append(all_actions[5])
+
+    return actions
 
 
 
