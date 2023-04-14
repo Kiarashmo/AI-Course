@@ -446,15 +446,10 @@ def charge_rent(player):
           if properties[player.location]["hotels"] == 0:
                player.balance = player.balance - (rent + 10*properties[player.location]["houses"])
                players[owner_id].balance = players[owner_id].balance + (rent + 10*properties[player.location]["houses"])
-               print(f"{player.id} paid {rent + 10*properties[player.location]['houses']}$ to {owner_id}") 
           else:
                player.balance = player.balance - (rent + 10*(properties[player.location]["houses"] + 1))
                players[owner_id].balance = players[owner_id].balance + (rent + 10*(properties[player.location]["houses"] + 1))
-               print(f"{player.id} paid {rent + 10*properties[player.location]['hotels']}$ to {owner_id}") 
-     
-     else:
-          #Either this property is not owned by any player or the player is the owner of this property.
-          raise ValueError(f"Error: Unable to charge rent from {player.id}.") 
+      
 
 def build_house(player, property):
      # Check if the property belongs to the player and is a valid property to build on
@@ -495,7 +490,7 @@ def get_valid_actions(player):
           # Check if the property is unowned
           if properties[player.location]["owner"] == "none":
                # Add the "BUY_PROP" action
-               #actions.append(all_actions[0]) # need to fix this(but latter)
+               actions.append(all_actions[0]) # need to fix this(but latter)
                actions.append(all_actions[1])
 
           elif properties[player.location]["owner"] != player.id:
@@ -524,15 +519,18 @@ def get_valid_actions(player):
 def evaluate_utility(player):
      net_worth = 0
      for prop_loc in player.ownedP:
+          net_worth += properties[prop_loc]["price"]
           if properties[prop_loc]["hotels"] == 0:
                net_worth += properties[prop_loc]["rent"]+ 10*properties[prop_loc]["houses"]
           else:
                net_worth += properties[prop_loc]["rent"]+ 10*(properties[prop_loc]["houses"] + 1)
      
      for rr_loc in player.ownedRR:
+          net_worth += properties[rr_loc]["price"]
           net_worth += properties[rr_loc]["rent"]
      
      for ut_loc in player.ownedUT:
+          net_worth += properties[ut_loc]["price"]
           net_worth += properties[ut_loc]["rent"]
           
      net_worth += player.balance
