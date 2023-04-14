@@ -8,6 +8,7 @@ Initializing game board with builtin dictionary data structure
     3. No double dice rule(i mean if 3 times happend then player should go to jail).
     4. One action per turn.
     5. No color(it means streets dont have any color and if player landed on a street can buy it and build house and hotels for it).
+    6. No sell option(yet).
 '''
 class stats:
     def __init__(self, id, location, balance, jail, ownedP, ownedRR, ownedUT):
@@ -88,10 +89,15 @@ def charge_rent(player):
      rent = properties[player.location]["rent"]
      owner_id = properties[player.location]["owner"]
 
-     if owner_id != "none" and owner_id != player.id and rent > 0:
-          player.balance -= rent
-          player[owner_id].balance += rent
-          print(f"{player.id} paid {rent}$ to {owner_id}") 
+     if owner_id != "none" and owner_id != player.id:
+          if properties[player.location]["hotel"] == 0:
+               player.balance = player.balance - (rent + 10*properties[player.location]["houses"])
+               player[owner_id].balance = player[owner_id].balance + (rent + 10*properties[player.location]["houses"])
+               print(f"{player.id} paid {rent + 10*properties[player.location]['houses']}$ to {owner_id}") 
+          else:
+               player.balance = player.balance - (rent + 10*properties[player.location]["hotel"])
+               player[owner_id].balance = player[owner_id].balance + (rent + 10*properties[player.location]["hotel"])
+               print(f"{player.id} paid {rent + 10*properties[player.location]['hotel']}$ to {owner_id}") 
      
      else:
           #Either this property is not owned by any player or the player is the owner of this property.
@@ -169,6 +175,7 @@ def get_valid_actions(player):
           actions.append(all_actions[3])
 
      return actions
+
 
 
 
@@ -278,7 +285,7 @@ properties = {0: {"name": "Go",
               
               10: {"name": "Electric Company",
                    "price": 150, 
-                   "rent": 0, 
+                   "rent": 20, 
                    "color": "none", 
                    "type": "utility", 
                    "owner": "none", 
@@ -414,7 +421,7 @@ properties = {0: {"name": "Go",
               
               24: {"name": "Water Works", 
                    "price": 150, 
-                   "rent": 0, 
+                   "rent": 20, 
                    "color": "none", 
                    "type": "utility", 
                    "owner": "none", 
@@ -508,30 +515,6 @@ properties = {0: {"name": "Go",
                    "houses": 0, 
                    "hotels": 0}
              }
-
-
-title_deeds = {"Mediterranean Avenue": {0: 2, 1: 10, 2: 30, 3: 90, 4: 160, 5: 250},
-              "Baltic Avenue": {0: 4, 1: 20, 2: 60, 3: 180, 4: 320, 5: 450},
-              "Oriental Avenue": {0: 6, 1: 30, 2: 90, 3: 270, 4: 400, 5: 550},
-              "Vermont Avenue": {0: 6, 1: 30, 2: 90, 3: 270, 4: 400, 5: 550},
-              "Connecticut Avenue": {8: 4, 1: 40, 2: 100, 3: 300, 4: 450, 5: 600},
-              "St. Charles Place": {0: 10, 1: 50, 2: 150, 3: 450, 4: 625, 5: 750},
-              "States Avenue": {0: 4, 1: 50, 2: 150, 3: 450, 4: 625, 5: 750},
-              "Virginia Avenue": {0: 4, 1: 60, 2: 180, 3: 500, 4: 700, 5: 900},
-              "St. James Place": {0: 4, 1: 70, 2: 200, 3: 550, 4: 750, 5: 950},
-              "Tennessee Avenue": {0: 4, 1: 70, 2: 200, 3: 550, 4: 750, 5: 950},
-              "New York Avenue": {0: 4, 1: 80, 2: 220, 3: 600, 4: 800, 5: 1000},
-              "Kentucky Avenue": {0: 4, 1: 90, 2: 250, 3: 700, 4: 875, 5: 1050},
-              "Indiana Avenue": {0: 4, 1: 90, 2: 250, 3: 700, 4: 875, 5: 1050},
-              "Illinois Avenue": {0: 4, 1: 100, 2: 300, 3: 750, 4: 925, 5: 1100},
-              "Atlantic Avenue": {0: 4, 1: 110, 2: 330, 3: 800, 4: 975, 5: 1150},
-              "Ventnor Avenue": {0: 4, 1: 120, 2: 360, 3: 850, 4: 1025, 5: 1200},
-              "Marvin Gardens": {0: 4, 1: 130, 2: 390, 3: 900, 4: 1100, 5: 1275},
-              "Pacific Avenue": {0: 4, 1: 140, 2: 450, 3: 1000, 4: 1200, 5: 1400},
-              "North Carolina Avenue": {0: 4, 1: 150, 2: 450, 3: 1000, 4: 1200, 5: 1400},
-              "Pennsylvania Avenue": {0: 4, 1: 160, 2: 480, 3: 1100, 4: 1300, 5: 1500},
-              "Park Place": {0: 4, 1: 170, 2: 500, 3: 1200, 4: 1400, 5: 1700},
-              "Boardwalk": {0: 4, 1: 200, 2: 600, 3: 1400, 4: 1700, 5: 2000}}
 
 all_actions = {
     0: "NOTHING",
