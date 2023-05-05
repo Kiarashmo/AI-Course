@@ -7,14 +7,14 @@ MAX_ROUNDS = 1000
 
 '''
 Initializing game board with builtin dictionary data structure
-* Game's rule for this version of Monopoly:
+* Game's rules for this version of Monopoly:
     1. Eliminated Chances and Community chest cards.
     2. No Trade and Auction.
     3. No double dice rule(i mean if 3 times happend then player should go to jail).
     4. One action per turn.
     5. No color(it means streets dont have any color and if player landed on a street can buy it and build house and hotels for it).
     6. No sell option(yet).
-    7. if player land on 'Go Jail' goes to 'jail' and must give 100$ and start the game from there
+    7. if player land on 'Go Jail' goes to 'jail' and must give 100$ and starts the game from there
 '''
 class stats:
     def __init__(self, id, location, balance, jail, ownedP, ownedRR, ownedUT):
@@ -284,7 +284,7 @@ while round_num <= MAX_ROUNDS:
           print(f"Player {current_player} passed Go and collected $200")
 
      # Use expectiminimax to choose the best action for the current player
-     _, best_action = expectiminimax(players, properties, 4, True, True, current_player)
+     _, best_action = expectiminimax(players, properties, 10, True, True, current_player)
      print(f"Player {current_player} chose action: {best_action}")
 
      # Update game state based on the chosen action
