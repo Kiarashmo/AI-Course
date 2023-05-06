@@ -5,22 +5,15 @@ class SudokuCSP:
         self.board = board
         self.variables = []
         self.domain = {}
-        self.constraints = {}
         self.subgrid_size = int(math.sqrt(len(self.board)))
-
-    def is_consistent(self, assignment):
-        for constraint in self.constraints:
-            if not constraint(assignment):
-                return False
-        return True
     
-    def set_variables(self):
+    def setVariables(self):
         for i in range(len(self.board)):
             for j in range(len(self.board[0])):
                 if self.board[i][j] == 0:
                     self.variables.append((i,j))
 
-    def set_domains(self):
+    def setDomains(self):
         for i, j in self.variables:
             values = set(range(1, len(self.board)+1))
 
@@ -44,7 +37,18 @@ class SudokuCSP:
 
             # add domain to dictionary
             self.domain[(i, j)] = values
-                    
+    
+    # This mehtod uses Minimum Remaining Values(MRV) heuristic in its domain.
+    def selectUnassignedVariable(self, assignment):
+        unassigned_variables = [var for var in self.variables if var not in assignment]
+        min_var = unassigned_variables[0]
+        for var in unassigned_variables:
+            if len(self.domain[var]) < len(self.domain[min_var]):
+                min_var = var
+        return min_var
+    
+    def orderDomainValues(self, var):
+        return sorted(self.domain[var])                 
 
     
 
@@ -93,10 +97,12 @@ def setBoard():
 board = setBoard()
 print(board)
 csp = SudokuCSP(board)
-csp.set_variables()
+csp.setVariables()
 # print(csp.variables)
 print(csp.subgrid_size)
-csp.set_domains()
+csp.setDomains()
 print(csp.domain)
+print(csp.selectUnassignedVariable({}))
+print(csp.orderDomainValues((3,4)))
 #solve(board)
-# printSudoku(board)
+printSudoku(board)
