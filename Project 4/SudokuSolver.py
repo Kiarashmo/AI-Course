@@ -1,121 +1,188 @@
-import math
+import time
 
-class SudokuCSP:
-    def __init__(self, board):
-        self.board = board
-        self.variables = []
-        self.domain = {}
-        self.subgrid_size = int(math.sqrt(len(self.board)))
+def solve_sudoku(board):
+    """
+    Solves the given Sudoku board using the backtracking algorithm with LCV, MRV, and forward checking heuristics.
+    """
+    # Find an empty cell with the fewest remaining values in its domain
+    row, col = find_empty_cell(board)
     
-    def setVariables(self):
-        for i in range(len(self.board)):
-            for j in range(len(self.board[0])):
-                if self.board[i][j] == 0:
-                    self.variables.append((i,j))
-
-    def setDomains(self):
-        for i, j in self.variables:
-            values = set(range(1, len(self.board)+1))
-
-            # check values in row
-            for k in range(len(self.board[0])):
-                if k != j and self.board[i][k] in values:
-                    values.remove(self.board[i][k])
+    # If there are no empty cells, the board is solved
+    if row == col == -1:
+        return True
+    
+    # Get the domain of possible values for the empty cell
+    domain = get_domain(board, row, col)
+    
+    # Try all possible values for the empty cell, sorted by increasing conflicts
+    for val in sorted(domain, key=lambda val: is_valid_move(board, row, col, val)):
+        if is_valid_move(board, row, col, val) == 0:
+            # Try this value
+            board[row][col] = val
             
-            # check values in column
-            for k in range(len(self.board)):
-                if k != i and self.board[k][j] in values:
-                    values.remove(self.board[k][j])
+            # Propagate the constraints of this assignment to the domains of the remaining empty cells
+            if forward_check(board, row, col, val):
+                # Recursively solve the rest of the board
+                if solve_sudoku(board):
+                    return True
                 
-            # check values in subgrid
-            subgrid_i = (i // self.subgrid_size) * self.subgrid_size
-            subgrid_j = (j // self.subgrid_size) * self.subgrid_size
-            for k in range(subgrid_i, subgrid_i + self.subgrid_size):
-                for l in range(subgrid_j, subgrid_j + self.subgrid_size):
-                    if (k, l) != (i, j) and self.board[k][l] in values:
-                        values.remove(self.board[k][l])
-
-            # add domain to dictionary
-            self.domain[(i, j)] = values
+            # If the recursion didn't succeed, backtrack and undo the constraints propagation
+            board[row][col] = 0
+            undo_forward_check(board, row, col, val)
     
-    # This mehtod uses Minimum Remaining Values(MRV) heuristic in its domain.
-    def selectUnassignedVariable(self, assignment):
-        unassigned_variables = [var for var in self.variables if var not in assignment]
-        if unassigned_variables == []:
-            return None
-        min_var = unassigned_variables[0]
-        for var in unassigned_variables:
-            if len(self.domain[var]) < len(self.domain[min_var]):
-                min_var = var
-        return min_var
+    # If no value worked, the board is unsolvable
+    return False
+
+def forward_check(board, row, col, val):
+    """
+    Propagates the constraints of the given assignment to the domains of the remaining empty cells.
+    Returns True if the propagation is successful, False otherwise.
+    """
+    # Remove the assigned value from the domains of the empty cells in the same row
+    for j in range(9):
+        if j != col and board[row][j] == 0:
+            domain = get_domain(board, row, j)
+            if val in domain:
+                domain.remove(val)
+                if len(domain) == 0:
+                    return False
     
-    def orderDomainValues(self, var):
-        if var == None:
-            return None
-        return sorted(self.domain[var])                 
-
-def isConsistent(var, value, assignment, sudoku):
-    # Check row consistency
-    for j in range(len(sudoku.board[0])):
-        if (var[0], j) in assignment and assignment[(var[0], j)] == value:
-            return False
-
-    # Check column consistency
-    for i in range(len(sudoku.board)):
-        if (i, var[1]) in assignment and assignment[(i, var[1])] == value:
-            return False
-
-    # Check subgrid consistency
-    subgrid_i = (var[0] // sudoku.subgrid_size) * sudoku.subgrid_size
-    subgrid_j = (var[1] // sudoku.subgrid_size) * sudoku.subgrid_size
-    for i in range(subgrid_i, subgrid_i + sudoku.subgrid_size):
-        for j in range(subgrid_j, subgrid_j + sudoku.subgrid_size):
-            if (i, j) in assignment and assignment[(i, j)] == value:
-                return False
-
+    # Remove the assigned value from the domains of the empty cells in the same column
+    for i in range(9):
+        if i != row and board[i][col] == 0:
+            domain = get_domain(board, i, col)
+            if val in domain:
+                domain.remove(val)
+                if len(domain) == 0:
+                    return False
+    
+    # Remove the assigned value from the domains of the empty cells in the same box
+    box_row, box_col = 3 * (row // 3), 3 * (col // 3)
+    for i in range(box_row, box_row + 3):
+        for j in range(box_col, box_col + 3):
+            if (i, j) != (row, col) and board[i][j] == 0:
+                domain = get_domain(board, i, j)
+                if val in domain:
+                    domain.remove(val)
+                    if len(domain) == 0:
+                        return False
+    
     return True
 
-def recursiveBacktracking(sudoku: SudokuCSP, assignment: dict, unassigned_variables: list):
-    # Check if the assignment is complete
-    if len(assignment) == len(sudoku.variables):
-        return [[assignment[(i, j)] for j in range(len(sudoku.board[0]))] for i in range(len(sudoku.board))]
+def undo_forward_check(board, row, col, val):
+    """
+    Undoes the constraints propagation of the given assignment to the domains of the remaining empty cells.
+    """
+    # Add the assigned value back to the domains of the empty cells in the same row
+    for j in range(9):
+        if j != col and board[row][j] == 0:
+            domain = get_domain(board, row, j)
+            if val not in domain:
+                domain.add(val)
+    
+    # Add the assigned value back to the domains of the empty cells in the same column
+    for i in range(9):
+        if i != row and board[i][col] == 0:
+            domain = get_domain(board, i, col)
+            if val not in domain:
+                domain.add(val)
+    
+    # Add the assigned value back to the domains of the empty cells in the same box
+    box_row, box_col = 3 * (row // 3), 3 * (col // 3)
+    for i in range(box_row, box_row + 3):
+        for j in range(box_col, box_col + 3):
+            if (i, j) != (row, col) and board[i][j] == 0:
+                domain = get_domain(board, i, j)
+                if val not in domain:
+                    domain.add(val)
 
-    # Select an unassigned variable
-    var = sudoku.selectUnassignedVariable(assignment)
+def get_domain(board, row, col):
+    """
+    Returns the domain of possible values for the given cell.
+    """
+    domain = set(range(1, 10))
+    # Check row
+    for val in board[row]:
+        domain.discard(val)
+    # Check column
+    for i in range(9):
+        val = board[i][col]
+        if val in domain:
+            domain.discard(val)
+    # Check box
+    box_row, box_col = 3 * (row // 3), 3 * (col // 3)
+    for i in range(box_row, box_row + 3):
+        for j in range(box_col, box_col + 3):
+            val = board[i][j]
+            if val in domain:
+                domain.discard(val)
+    return domain
 
-    # Order the domain of the variable
-    ordered_domain = sudoku.orderDomainValues(var)
+def find_empty_cell(board):
+    """
+    Finds the next empty cell in the board with the fewest remaining values in its domain.
+    Returns (row, col) of the empty cell or (-1, -1) if no cell is empty.
+    """
+    min_domain_size = float('inf')
+    min_row, min_col = -1, -1
+    for row in range(9):
+        for col in range(9):
+            if board[row][col] == 0:
+                domain = get_domain(board, row, col)
+                domain_size = len(domain)
+                if domain_size < min_domain_size:
+                    min_domain_size = domain_size
+                    min_row, min_col = row, col
+    return (min_row, min_col) if min_row != -1 else (-1, -1)
 
-    # Try each value in the ordered domain
-    for value in ordered_domain:
-        # Check if the value is consistent with the current assignment
-        if isConsistent(var, value, assignment, sudoku):
-            # Add the value to the assignment
-            assignment[var] = value
-            unassigned_variables.remove(var)
-            print(assignment)
+def get_domain(board, row, col):
+    """
+    Returns the domain of possible values for the given cell.
+    """
+    domain = set(range(1, 10))
+    # Check row
+    for val in board[row]:
+        domain.discard(val)
+    # Check column
+    for i in range(9):
+        val = board[i][col]
+        if val in domain:
+            domain.discard(val)
+    # Check box
+    box_row, box_col = 3 * (row // 3), 3 * (col // 3)
+    for i in range(box_row, box_row + 3):
+        for j in range(box_col, box_col + 3):
+            val = board[i][j]
+            if val in domain:
+                domain.discard(val)
+    return domain
 
-            # Recursively call the function with the updated assignment and list of unassigned variables
-            result = recursiveBacktracking(sudoku, assignment, unassigned_variables)
+def is_valid_move(board, row, col, val):
+    """
+    Checks if placing the given value at the given position is valid.
+    Returns the number of conflicts that this move would create in the remaining empty cells.
+    """
+    conflicts = 0
+    
+    # Check row
+    for j in range(9):
+        if j != col and board[row][j] == val:
+            conflicts += 1
+    
+    # Check column
+    for i in range(9):
+        if i != row and board[i][col] == val:
+            conflicts += 1
+    
+    # Check box
+    box_row, box_col = 3 * (row // 3), 3 * (col // 3)
+    for i in range(box_row, box_row + 3):
+        for j in range(box_col, box_col + 3):
+            if (i, j) != (row, col) and board[i][j] == val:
+                conflicts += 1
+    
+    return conflicts
 
-            # If the recursion returns a solution, return the solution
-            if result != None:
-                return result
-
-            # If the recursion does not return a solution, remove the value from the assignment
-            del assignment[var]
-            unassigned_variables.append(var)
-
-    # If no value in the domain results in a solution, return failure
-    return None
-
-def solve(board):
-    sudoku = SudokuCSP(board)
-    sudoku.setVariables()
-    sudoku.setDomains()
-    assignment = {}
-    unassigned_variables = sudoku.variables
-    return recursiveBacktracking(sudoku, assignment, unassigned_variables)
 
 def printSudoku(board):
     for i in range(len(board)):
@@ -131,8 +198,6 @@ def printSudoku(board):
             else:
                 print(str(board[i][j]) + " ", end="")
 
-# Test
-# Initializing a test board, empty cells are initialized with 0.
 def setBoard():
     board = list()
     sudokuBoard = '''200080300
@@ -155,5 +220,10 @@ def setBoard():
 
 board = setBoard()
 printSudoku(board)
-assignment = solve(board)
-print(assignment)
+print("=============================================")
+start_time = time.time()
+bool = solve_sudoku(board)
+end_time = time.time()
+printSudoku(board)
+print(end_time - start_time)
+
