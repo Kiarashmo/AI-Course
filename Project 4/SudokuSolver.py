@@ -190,21 +190,42 @@ def is_valid_move(board, row, col, val):
     return conflicts
 
 
+# def printSudoku(board):
+#     subgrid_size = int(math.sqrt(len(board)))
+
+#     for i in range(len(board)):
+#         if i % subgrid_size == 0 and i != 0:
+#             print("..............................................")
+
+#         for j in range(len(board[0])):
+#             if j % subgrid_size == 0 and j != 0:
+#                 print("|", end=" ")
+
+#             if j == len(board[0])-1:
+#                 print(board[i][j])
+#             else:
+#                 print(str(board[i][j]) + " ", end="")
+
 def printSudoku(board):
     subgrid_size = int(math.sqrt(len(board)))
 
+    # Compute the width of each cell based on the maximum value in the board
+    max_val = max(max(row) for row in board)
+    cell_width = len(str(max_val))
+
     for i in range(len(board)):
         if i % subgrid_size == 0 and i != 0:
-            print("..............................................")
+            print("-" * 55)
 
         for j in range(len(board[0])):
             if j % subgrid_size == 0 and j != 0:
                 print("|", end=" ")
 
             if j == len(board[0])-1:
-                print(board[i][j])
+                print(str(board[i][j]).rjust(cell_width))
             else:
-                print(str(board[i][j]) + " ", end="")
+                print(str(board[i][j]).rjust(cell_width), end=" ")
+
 
 
 n = int(input("Please enter the Board size: "))
@@ -216,9 +237,8 @@ for k in range(c):
     i, j, value = map(int, input("Enter (i, j, value) separated by spaces: ").split())
     board[i][j] = value
 
-
 printSudoku(board)
-print("=============================================")
+print("=========================================================================")
 
 start_time = time.time()
 
