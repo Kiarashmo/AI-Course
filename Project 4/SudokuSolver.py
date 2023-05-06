@@ -139,29 +139,6 @@ def find_empty_cell(board):
                     min_row, min_col = row, col
     return (min_row, min_col) if min_row != -1 else (-1, -1)
 
-def get_domain(board, row, col):
-    """
-    Returns the domain of possible values for the given cell.
-    """
-    subgrid_size = int(math.sqrt(len(board)))
-    domain = set(range(1, len(board)+1))
-    # Check row
-    for val in board[row]:
-        domain.discard(val)
-    # Check column
-    for i in range(len(board)):
-        val = board[i][col]
-        if val in domain:
-            domain.discard(val)
-    # Check box
-    box_row, box_col = subgrid_size * (row // subgrid_size), subgrid_size * (col // subgrid_size)
-    for i in range(box_row, box_row + subgrid_size):
-        for j in range(box_col, box_col + subgrid_size):
-            val = board[i][j]
-            if val in domain:
-                domain.discard(val)
-    return domain
-
 def is_valid_move(board, row, col, val):
     """
     Checks if placing the given value at the given position is valid.
@@ -220,8 +197,8 @@ for k in range(c):
     i, j, value = map(int, input("Enter (i, j, value) separated by spaces: ").split())
     board[i][j] = value
 
+print("============= Unsolved Board =============")
 printSudoku(board)
-print("=========================================================================")
 
 start_time = time.time()
 
@@ -229,7 +206,9 @@ bool = solve_sudoku(board)
 
 end_time = time.time()
 
+print("============= Solved Board =============")
 printSudoku(board)
 
+print("============= Time spent to solve =============")
 print(end_time - start_time)
 
