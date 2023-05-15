@@ -15,7 +15,7 @@ def solve_sudoku(board):
     # Get the domain of possible values for the empty cell
     domain = get_domain(board, row, col)
     
-    # Try all possible values for the empty cell, sorted by increasing conflicts
+    # Try all possible values for the empty cell, sorted by increasing conflicts(LCV)
     for val in sorted(domain, key=lambda val: is_valid_move(board, row, col, val)):
         if is_valid_move(board, row, col, val) == 0:
             # Try this value
@@ -105,14 +105,17 @@ def get_domain(board, row, col):
     """
     subgrid_size = int(math.sqrt(len(board)))
     domain = set(range(1, len(board)+1))
+
     # Check row
     for val in board[row]:
         domain.discard(val)
+    
     # Check column
     for i in range(len(board)):
         val = board[i][col]
         if val in domain:
             domain.discard(val)
+    
     # Check box
     box_row, box_col = subgrid_size * (row // subgrid_size), subgrid_size * (col // subgrid_size)
     for i in range(box_row, box_row + subgrid_size):
